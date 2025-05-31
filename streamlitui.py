@@ -39,48 +39,48 @@ def read_and_save_file():
         os.remove(file_path)
 
 
-def is_openai_api_key_set() -> bool:
-    return len(st.session_state["OPENAI_API_KEY"]) > 0
+def is_google_api_key_set() -> bool:
+    return len(st.session_state["GOOGLE_API_KEY"]) > 0
 
 
 def main():
     if len(st.session_state) == 0:
         st.session_state["messages"] = []
-        st.session_state["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY", "")
-        if is_openai_api_key_set():
-            st.session_state["pdfquery"] = PDFQuery(st.session_state["OPENAI_API_KEY"])
+        st.session_state["GOOGLE_API_KEY"] = os.environ.get("GOOGLE_API_KEY", "")
+        if is_google_api_key_set():
+            st.session_state["pdfquery"] = PDFQuery(google_api_key=st.session_state["GOOGLE_API_KEY"])
         else:
             st.session_state["pdfquery"] = None
 
     st.header("ChatPDF")
 
-    if st.text_input("OpenAI API Key", value=st.session_state["OPENAI_API_KEY"], key="input_OPENAI_API_KEY", type="password"):
+    if st.text_input("Google API Key", value=st.session_state["GOOGLE_API_KEY"], key="input_GOOGLE_API_KEY", type="password"):
         if (
-            len(st.session_state["input_OPENAI_API_KEY"]) > 0
-            and st.session_state["input_OPENAI_API_KEY"] != st.session_state["OPENAI_API_KEY"]
+            len(st.session_state["input_GOOGLE_API_KEY"]) > 0
+            and st.session_state["input_GOOGLE_API_KEY"] != st.session_state["GOOGLE_API_KEY"]
         ):
-            st.session_state["OPENAI_API_KEY"] = st.session_state["input_OPENAI_API_KEY"]
+            st.session_state["GOOGLE_API_KEY"] = st.session_state["input_GOOGLE_API_KEY"]
             if st.session_state["pdfquery"] is not None:
-                st.warning("Please, upload the files again.")
+                st.warning("API key changed. Please upload files again if you wish to use the new key with them.") # Changed warning
             st.session_state["messages"] = []
             st.session_state["user_input"] = ""
-            st.session_state["pdfquery"] = PDFQuery(st.session_state["OPENAI_API_KEY"])
+            st.session_state["pdfquery"] = PDFQuery(google_api_key=st.session_state["GOOGLE_API_KEY"])
 
     st.subheader("Upload a document")
     st.file_uploader(
         "Upload document",
-        type=["pdf"],
+        type=["pdf", "png", "jpg", "jpeg"],
         key="file_uploader",
         on_change=read_and_save_file,
         label_visibility="collapsed",
         accept_multiple_files=True,
-        disabled=not is_openai_api_key_set(),
+        disabled=not is_google_api_key_set(),
     )
 
     st.session_state["ingestion_spinner"] = st.empty()
 
     display_messages()
-    st.text_input("Message", key="user_input", disabled=not is_openai_api_key_set(), on_change=process_input)
+    st.text_input("Message", key="user_input", disabled=not is_google_api_key_set(), on_change=process_input)
 
     st.divider()
     st.markdown("Source code: [Github](https://github.com/Anil-matcha/ChatPDF)")
