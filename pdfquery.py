@@ -14,8 +14,8 @@ except ImportError:
 
 
 class PDFQuery:
-    def __init__(self, openai_api_key = None, google_api_key = None) -> None:
-        # Determine which API to use
+    def __init__(self, openai_api_key=None, google_api_key=None) -> None:
+        # Determine which API to use (prioritize Google API if both are provided)
         self.use_gemini = google_api_key is not None
         
         if self.use_gemini:
