@@ -6,15 +6,30 @@ from langchain.document_loaders import PyPDFium2Loader
 from langchain.chains.question_answering import load_qa_chain
 # from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
+except ImportError:
+    ChatGoogleGenerativeAI = None
+    GoogleGenerativeAIEmbeddings = None
 
 
 class PDFQuery:
-    def __init__(self, openai_api_key = None) -> None:
-        self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
-        os.environ["OPENAI_API_KEY"] = openai_api_key
+    def __init__(self, openai_api_key=None, google_api_key=None) -> None:
+        # Determine which API to use (prioritize Google API if both are provided)
+        self.use_gemini = google_api_key is not None
+        
+        if self.use_gemini:
+            if ChatGoogleGenerativeAI is None:
+                raise ImportError("Please install langchain-google-genai to use Gemini API")
+            self.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=google_api_key)
+            os.environ["GOOGLE_API_KEY"] = google_api_key
+            self.llm = ChatGoogleGenerativeAI(model="gemini-pro", google_api_key=google_api_key, temperature=0)
+        else:
+            self.embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
+            os.environ["OPENAI_API_KEY"] = openai_api_key
+            self.llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
+        
         self.text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        # self.llm = OpenAI(temperature=0, openai_api_key=openai_api_key)
-        self.llm = ChatOpenAI(temperature=0, openai_api_key=openai_api_key)
         self.chain = None
         self.db = None
 
@@ -31,8 +46,7 @@ class PDFQuery:
         documents = loader.load()
         splitted_documents = self.text_splitter.split_documents(documents)
         self.db = Chroma.from_documents(splitted_documents, self.embeddings).as_retriever()
-        # self.chain = load_qa_chain(OpenAI(temperature=0), chain_type="stuff")
-        self.chain = load_qa_chain(ChatOpenAI(temperature=0), chain_type="stuff")
+        self.chain = load_qa_chain(self.llm, chain_type="stuff")
 
     def forget(self) -> None:
         self.db = None

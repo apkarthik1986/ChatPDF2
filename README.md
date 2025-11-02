@@ -24,7 +24,7 @@ Subscribe to https://www.youtube.com/@AnilChandraNaiduMatcha for more such video
 
 2. Run "pip install -r requirements.txt"
 
-3. Set OPENAI_API_KEY environment variable with your openai key
+3. Set OPENAI_API_KEY environment variable with your openai key OR set GOOGLE_API_KEY environment variable with your Gemini API key
 
 4. Run "python main.py"
 
